@@ -10,28 +10,32 @@ def distributed_server(host, port, num_points, num_clients):
 
     connections = []
     total_inside = 0
-    clients = 0
 
     # Aceita conexões de clientes
-    while clients < num_clients:
+    while len(connections) < num_clients:
         conn, addr = server_socket.accept()
         print(f"Conexão recebida de {addr}")
         connections.append(conn)
-        clients += 1
 
     points_per_client = num_points // len(connections)
+    remaining_points = num_points % len(connections)
 
     start_time = time.time()
 
     # Envia os pontos para os clientes
-    for conn in connections:
-        conn.sendall(str(points_per_client).encode())
+    for i, conn in enumerate(connections):
+        points_to_send = points_per_client + (1 if i < remaining_points else 0)
+        conn.sendall(str(points_to_send).encode())
 
     # Recebe os resultados dos clientes
     for conn in connections:
-        data = conn.recv(1024)
-        total_inside += int(data.decode())
-        conn.close()
+        try:
+            data = conn.recv(1024)
+            total_inside += int(data.decode())
+        except ValueError:
+            print(f"Dado inválido recebido.")
+        finally:
+            conn.close()
 
     end_time = time.time()
     server_socket.close()
