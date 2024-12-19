@@ -1,4 +1,5 @@
 import socket
+import time
 
 def distributed_server(host, port, num_points, num_clients):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -20,6 +21,8 @@ def distributed_server(host, port, num_points, num_clients):
 
     points_per_client = num_points // len(connections)
 
+    start_time = time.time()
+
     # Envia os pontos para os clientes
     for conn in connections:
         conn.sendall(str(points_per_client).encode())
@@ -30,10 +33,14 @@ def distributed_server(host, port, num_points, num_clients):
         total_inside += int(data.decode())
         conn.close()
 
+    end_time = time.time()
     server_socket.close()
-    return 4 * total_inside / num_points
+
+    execution_time = end_time - start_time
+    return 4 * total_inside / num_points, execution_time
 
 if __name__ == "__main__":
     NUM_POINTS = 1000000  # Número total de pontos
     NUM_CLIENTS = 2  # Número de clientes esperados
-    print(f"Resultado Distribuído: Pi = {distributed_server('localhost', 5000, NUM_POINTS, NUM_CLIENTS)}")
+    pi, execution_time = distributed_server('localhost', 5000, NUM_POINTS, NUM_CLIENTS)
+    print(f"Resultado Distribuido: Pi = {pi}, Tempo = {execution_time:.4f} segundos")
